@@ -142,8 +142,9 @@ class SocketIOConnector: IConnector {
     ///
     /// - Parameter name: channel name
     func leave(name : String){
-        let namesOfChannels: [String] = [name, "private-" + name, "presence-" + name];
-        for name in namesOfChannels{
+        let namesOfChannels: [String] = [name, "private-" + name, "presence-" + name]
+        
+        for name in namesOfChannels {
             if let channel = channels[name] {
                 channel.unsubscribe()
                 channels[name] = nil
