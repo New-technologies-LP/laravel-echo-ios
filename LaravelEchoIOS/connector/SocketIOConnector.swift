@@ -11,26 +11,32 @@ class SocketIOConnector: IConnector {
 
     
     /// The Socket.io connection instance.
-    var socket: SocketIOClient?
+    
+    private var manager: SocketManager?
+    
+    private var socket: SocketIOClient? {
+        guard let manager = self.manager else { return nil }
+        return manager.defaultSocket
+    }
 
     
     /// Default connector options.
-    var _defaultOptions: [String: Any] = [ "auth": ["headers": []], "authEndpoint": "/broadcasting/auth", "broadcaster": "socket.io", "host": "", "key": "", "namespace": "App.Events"]
+    private var _defaultOptions: [String: Any] = [ "auth": ["headers": []], "authEndpoint": "/broadcasting/auth", "broadcaster": "socket.io", "host": "", "key": "", "namespace": "App.Events"]
 
     
     /// Connector options.
-    var options: [String: Any]
+    private var options: [String: Any]
 
     
     /// All of the subscribed channels.
-    var channels: [String: IChannel]
+    var channels: [String: IChannel] = [String: IChannel]()
 
     
     /// Create a new class instance.
     ///
     /// - Parameter options: options
     init(options: [String: Any]){
-        self.socket = nil
+        manager = nil
         self.options = options
         self.channels = [:]
         //self.setOptions(options: options)
@@ -42,20 +48,29 @@ class SocketIOConnector: IConnector {
     ///
     /// - Parameter options: options
     func setOptions(options: [String: Any]){
-        self.options =  self.mergeOptions(options: options)
+        self.options = _defaultOptions
+        self.options.merge(options, uniquingKeysWith: { (first, _) in first })
     }
 
     
     /// Create a fresh Socket.io connection.
     func connect(){
-        if let url = self.options["host"] as? String {
-            let nurl: URL! = URL(string: url)
-            let socketConfig: SocketIOClientConfiguration = [.log(true), .compress]
-            self.socket = SocketIOClient(socketURL: nurl, config: socketConfig)
-            self.socket?.connect(timeoutAfter: 5, withHandler: {
-                print("ERROR")
-            })
+        guard let stringUrl = options["host"] as? String else  {
+            debugPrint("Error, host is missing \n")
+            return
         }
+    
+        guard let url: URL = URL(string: stringUrl) else {
+            debugPrint("Error, can't create URL class varible from \(stringUrl) \n")
+            return
+        }
+        
+        manager = SocketManager(socketURL: url, config: [.log(true), .compress])
+        
+        self.socket?.connect(timeoutAfter: 5, withHandler: {
+            print("Error, timeout connect to host \n \(url) \n with options \n \(self.options) ")
+        })
+
     }
     
     
@@ -65,7 +80,7 @@ class SocketIOConnector: IConnector {
     ///   - event: event name
     ///   - callback: callback
     func on(event: String, callback: @escaping NormalCallback){
-        self.socket!.on(event, callback: callback)
+        socket!.on(event, callback: callback)
     }
 
     
@@ -76,8 +91,8 @@ class SocketIOConnector: IConnector {
     ///   - event: event name
     ///   - callback: callback
     /// - Returns: the channel
-    func listen(name : String, event: String, callback: @escaping NormalCallback) -> IChannel{
-        return self.channel(name: name).listen(event: event, callback: callback)
+    func listen(name : String, event: String, callback: @escaping NormalCallback) -> IChannel {
+        return channel(name: name).listen(event: event, callback: callback)
     }
 
     
@@ -86,13 +101,12 @@ class SocketIOConnector: IConnector {
     /// - Parameter name: channel name
     /// - Returns: the channel
     func channel(name: String) -> IChannel{
-        if(self.channels[name] == nil){
-            let socket: SocketIOClient! = self.socket
-            self.channels[name] = SocketIoChannel(
-                socket: socket, name: name, options: self.options
-            )
+        if channels[name] == nil {
+            channels[name] = SocketIoChannel(socket: socket!,
+                                             name: name,
+                                             options: options)
         }
-        return self.channels[name]!
+        return channels[name]!
     }
 
     
@@ -101,13 +115,12 @@ class SocketIOConnector: IConnector {
     /// - Parameter name: channel name
     /// - Returns: the private channel
     func privateChannel(name: String) -> IPrivateChannel{
-        if(self.channels["private-" + name] == nil){
-            let socket: SocketIOClient! = self.socket
-            self.channels["private-" + name] = SocketIOPrivateChannel(
-            socket: socket, name: "private-" + name, options: self.options
-            )
+        if channels["private-" + name] == nil {
+           channels["private-" + name] = SocketIOPrivateChannel(socket: socket!,
+                                                                name: "private-" + name,
+                                                                options: options)
         }
-        return self.channels["private-" + name]! as! IPrivateChannel
+        return channels["private-" + name]! as! IPrivateChannel
     }
 
     
@@ -116,13 +129,12 @@ class SocketIOConnector: IConnector {
     /// - Parameter name: channel name
     /// - Returns: the presence channel
     func presenceChannel(name: String) -> IPresenceChannel{
-        if(self.channels["presence-" + name] == nil){
-            let socket: SocketIOClient! = self.socket
-            self.channels["presence-" + name] = SocketIOPresenceChannel(
-            socket: socket, name: "presence-" + name, options: self.options
-            )
+        if channels["presence-" + name] == nil {
+            channels["presence-" + name] = SocketIOPresenceChannel(socket: socket!,
+                                                                   name: "presence-" + name,
+                                                                   options: options)
         }
-        return self.channels["presence-" + name]! as! IPresenceChannel
+        return channels["presence-" + name]! as! IPresenceChannel
     }
 
     
@@ -130,11 +142,11 @@ class SocketIOConnector: IConnector {
     ///
     /// - Parameter name: channel name
     func leave(name : String){
-        let channels: [String] = [name, "private-" + name, "presence-" + name];
-        for(name) in channels{
-            if let c = self.channels[name] {
-                c.unsubscribe()
-                self.channels[name] = nil
+        let namesOfChannels: [String] = [name, "private-" + name, "presence-" + name];
+        for name in namesOfChannels{
+            if let channel = channels[name] {
+                channel.unsubscribe()
+                channels[name] = nil
             }
         }
     }
@@ -144,16 +156,14 @@ class SocketIOConnector: IConnector {
     ///
     /// - Returns: the socket id
     func socketId() -> String {
-        if let socket: SocketIOClient = self.socket{
-            return socket.sid!
-        }
-        return ""
+        guard let socket = self.socket else { return String() }
+        return socket.sid
     }
 
     
     /// Disconnect from the Echo server.
     func disconnect(){
-        let socket: SocketIOClient! = self.socket
+        guard let socket = self.socket else { return }
         socket.disconnect()
     }
     
