@@ -36,7 +36,7 @@ public class Echo {
     /// - Parameter callback: callback
     
     public func connected(callback: @escaping NormalCallback){
-        on(event: "connect", callback: callback)
+        connector.on(clientEvent: .connect, callback: callback)
         connector.connect()
         return
     }
@@ -47,7 +47,7 @@ public class Echo {
     /// - Parameters:
     ///   - event: event name
     ///   - callback: callback
-    public func on(event: String, callback: @escaping NormalCallback){
+    public func on(event: String, callback: @escaping NormalCallback) {
         return connector.on(event: event, callback: callback)
     }
 

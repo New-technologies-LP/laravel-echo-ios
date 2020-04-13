@@ -21,6 +21,12 @@ protocol IConnector{
     ///   - callback: callback
     func on(event: String, callback: @escaping NormalCallback)
 
+    /// Set  an client event handler
+    /// - Parameters:
+    ///   - event: event name
+    ///   - callback: callback
+    
+    func on(clientEvent: SocketClientEvent, callback: @escaping NormalCallback)
     
     /// Get a channel instance by name.
     ///

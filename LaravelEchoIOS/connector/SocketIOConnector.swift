@@ -67,9 +67,13 @@ class SocketIOConnector: IConnector {
         
         manager = SocketManager(socketURL: url, config: [.log(true), .compress])
         
-        self.socket?.connect(timeoutAfter: 5, withHandler: {
-            print("Error, timeout connect to host \n \(url) \n with options \n \(self.options) ")
+        socket?.connect(timeoutAfter: 5, withHandler: {
+            debugPrint("Error, timeout connect to host \n \(url) \n with options \n \(self.options) ")
         })
+        
+//        self.socket?.connect(timeoutAfter: 5, withHandler: {
+//
+//        })
 
     }
     
@@ -82,7 +86,15 @@ class SocketIOConnector: IConnector {
     func on(event: String, callback: @escaping NormalCallback){
         socket!.on(event, callback: callback)
     }
-
+    
+    /// Add client handler
+    ///
+    /// - Parameters:
+    ///   - event: event name
+    ///   - callback: callback
+    func on(clientEvent: SocketClientEvent, callback: @escaping NormalCallback) {
+        socket?.on(clientEvent: clientEvent, callback: callback)
+    }
     
     /// Listen for an event on a channel instance.
     ///
@@ -143,7 +155,6 @@ class SocketIOConnector: IConnector {
     /// - Parameter name: channel name
     func leave(name : String){
         let namesOfChannels: [String] = [name, "private-" + name, "presence-" + name]
-        
         for name in namesOfChannels {
             if let channel = channels[name] {
                 channel.unsubscribe()
