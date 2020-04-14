@@ -28,7 +28,7 @@ class SocketIOPrivateChannel: SocketIoChannel, IPrivateChannel {
     ///   - data: data send
     /// - Returns: the private channel itself
     func whisper(eventName: String, data: [AnyObject]) -> IPrivateChannel{
-        self.socket.emit("client event", [
+        socket.emit("client event", [
             "channel": self.name,
             "event": "client-" + eventName,
             "data" : data

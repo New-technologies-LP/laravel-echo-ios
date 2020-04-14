@@ -96,15 +96,15 @@ class SocketIoChannel: Channel {
     ///   - event: event name
     ///   - callback: callback
     func on(event: String, callback: @escaping NormalCallback){
-
-        func listener(data: [Any], ack: SocketAckEmitter){
+        
+        let listener: NormalCallback = { (data, ack) in
             if let channel = data[0] as? String {
                 if(self.name == channel){
                     callback(data, ack)
                 }
             }
         }
-
+        
         self.socket.on(event, callback: listener)
         self.bind(event: event, callback: listener)
     }
