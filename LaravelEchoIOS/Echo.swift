@@ -35,9 +35,9 @@ public class Echo {
     ///
     /// - Parameter callback: callback
     
-    public func connected(callback: @escaping NormalCallback){
-        connector.on(clientEvent: .connect, callback: callback)
+    public func connected(callback: @escaping NormalCallback) {
         connector.connect()
+        connector.on(clientEvent: .connect, callback: callback)
         return
     }
 
@@ -59,7 +59,7 @@ public class Echo {
     ///   - event: event name
     ///   - callback: callback
     /// - Returns: the channel listened
-    public func listen(channel: String, event: String, callback: @escaping NormalCallback) -> IChannel{
+    public func listen(channel: String, event: String, callback: @escaping NormalCallback) -> IChannel {
         return connector.listen(name: channel, event: event, callback: callback);
     }
 

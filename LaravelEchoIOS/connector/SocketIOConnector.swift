@@ -9,16 +9,15 @@ import SocketIO
 /// This class creates a connnector to a Socket.io server.
 class SocketIOConnector: IConnector {
 
-    
     /// The Socket.io connection instance.
-    
     private var manager: SocketManager?
+    
     
     private var socket: SocketIOClient? {
         guard let manager = self.manager else { return nil }
         return manager.defaultSocket
     }
-
+    
     
     /// Default connector options.
     private var _defaultOptions: [String: Any] = [ "auth": ["headers": []], "authEndpoint": "/broadcasting/auth", "broadcaster": "socket.io", "host": "", "key": "", "namespace": "App.Events"]
@@ -39,8 +38,6 @@ class SocketIOConnector: IConnector {
         manager = nil
         self.options = options
         self.channels = [:]
-        //self.setOptions(options: options)
-        self.connect()
     }
 
     
@@ -71,10 +68,6 @@ class SocketIOConnector: IConnector {
             debugPrint("Error, timeout connect to host \n \(url) \n with options \n \(self.options) ")
         })
         
-//        self.socket?.connect(timeoutAfter: 5, withHandler: {
-//
-//        })
-
     }
     
     
@@ -193,3 +186,7 @@ class SocketIOConnector: IConnector {
     }
 
 }
+
+//MARK: - private
+
+
