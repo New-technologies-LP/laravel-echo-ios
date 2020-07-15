@@ -10,7 +10,7 @@ import SocketIO
 
 
 /// This class represents a Socket.io channel.
-class SocketIoChannel: Channel {
+public class SocketIoChannel: Channel {
     
     
     /// The Socket.io client instance.
@@ -64,14 +64,14 @@ class SocketIoChannel: Channel {
 
     
     /// Subscribe to a Socket.io channel.
-    override func subscribe(){
+    public override func subscribe(){
         let data = [["channel": self.name, "auth": self.auth]]
         self.socket.emit("subscribe", with : data)
     }
 
     
     /// Unsubscribe from channel and ubind event callbacks.
-    override func unsubscribe(){
+    public override func unsubscribe(){
         self.unbind()
         let data = [["channel": self.name, "auth": self.auth]]
         self.socket.emit("unsubscribe", with: data)
@@ -84,7 +84,7 @@ class SocketIoChannel: Channel {
     ///   - event: event name
     ///   - callback: callback
     /// - Returns: the channel itself
-    override func listen(event: String, callback: @escaping NormalCallback) -> IChannel{
+    public override func listen(event: String, callback: @escaping NormalCallback) -> IChannel{
         self.on(event: self.eventFormatter.format(event: event), callback: callback)
         return self
     }

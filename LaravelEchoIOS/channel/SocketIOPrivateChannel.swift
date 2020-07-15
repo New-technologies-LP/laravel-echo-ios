@@ -8,7 +8,7 @@ import SocketIO
 /**
  * This class represents a Socket.io private channel.
  */
-class SocketIOPrivateChannel: SocketIoChannel, IPrivateChannel {
+public class SocketIOPrivateChannel: SocketIoChannel, IPrivateChannel {
 
     /// Create a new class instance.
     ///
@@ -27,7 +27,7 @@ class SocketIOPrivateChannel: SocketIoChannel, IPrivateChannel {
     ///   - eventName: event name
     ///   - data: data send
     /// - Returns: the private channel itself
-    func whisper(eventName: String, data: [AnyObject]) -> IPrivateChannel{
+    public func whisper(eventName: String, data: [AnyObject]) -> IPrivateChannel{
         socket.emit("client event", [
             "channel": self.name,
             "event": "client-" + eventName,
